@@ -1,0 +1,9 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image" : {
+    "Name" : ${dockerImageURI},
+    "Update": "true"
+  },
+  "Ports" : [{ "ContainerPort": "${port}" }],
+  "Logging": "/opt/docker/log"
+}
