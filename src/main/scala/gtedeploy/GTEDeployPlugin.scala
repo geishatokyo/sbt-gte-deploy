@@ -95,6 +95,31 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   def getGTEDeployConf(file: File) =
     GTEDeployConf.load(file)
 
+  // check settings
+
+  def checkSettings : Seq[Setting[_]] = Seq(
+    noCheck := {DoctorResult.Ok},
+    strictCheck := doctor.value,
+    briefCheck <<= (awsRegion in EBS, appName in EBS, envName,streams,gteDeployConf) map runBriefCheck,
+    preCheck := briefCheck.value
+  )
+
+  def runBriefCheck(region: String,appName: String,envName: String,s: TaskStreams, conf: GTEDeployConf) = {
+
+    useEBSClient(conf,region){implicit cli =>
+      val (status,color) = ebs.getHelth(appName,envName)
+      if(color == "Green" && status == "Ok") {
+        DoctorResult.Ok
+      }else if(status == "Ok"){
+        s.log.warn(s"Env status is Ok but not so good color:${color}.")
+        DoctorResult.Warning
+      }else{
+        s.log.error(s"Bad env status.${status}(${color})")
+        DoctorResult.Error
+      }
+    }
+  }
+
 
   // ecr settings
   def ecrSettings : Seq[Setting[_]] = Seq(
@@ -382,6 +407,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   // collaboration
 
   val phaseSettings : Seq[Setting[_]] = Seq(
+    runCheckPhase(),
     runBuildPhase(),
     runPushPhase(),
     runMakeVersionLabelPhase(),
@@ -389,6 +415,18 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     runWaitFinishPhase(),
     runAllPhase()
   )
+
+  def runCheckPhase() = {
+    checkPhase := {
+      preCheck.value match{
+        case DoctorResult.Ok =>
+        case DoctorResult.Warning =>
+        case DoctorResult.Error => {
+          throw new RuntimeException("Fail to precheck")
+        }
+      }
+    }
+  }
 
   def runBuildPhase() = {
     buildPhase := Def.sequential(

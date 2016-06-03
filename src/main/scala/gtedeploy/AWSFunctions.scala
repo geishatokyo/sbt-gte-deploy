@@ -90,6 +90,15 @@ trait AWSFunctions {
     }
 
 
+    /**
+      * get env health
+      * Status: Ok,Info,Busy...
+      * Color:Green,Gray,Yellow,Red
+      * @param appName
+      * @param envName
+      * @param client
+      * @return (Status,Color)
+      */
     def getHelth(appName: String, envName: String)(implicit client: AWSElasticBeanstalkClient) = {
       val res = client.describeEnvironmentHealth(new DescribeEnvironmentHealthRequest().
         withEnvironmentName(envName).

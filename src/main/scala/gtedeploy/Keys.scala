@@ -36,7 +36,6 @@ class Keys {
 
   // dynamic settings
 
-  val doctor = TaskKey[DoctorResult]("doctor","Check can deploy")
 
   val gteDeployConf = TaskKey[GTEDeployConf]("gte-deploy-conf","Load GTEDeploy config")
 
@@ -59,6 +58,13 @@ class Keys {
 
   // single tasks (only depends on settings)
 
+  val strictCheck = TaskKey[DoctorResult]("strict-check","Check strict(use doctorTask)")
+  val briefCheck = TaskKey[DoctorResult]("brief-check","Check briefly.(only check env state)")
+  val noCheck = TaskKey[DoctorResult]("no-check","Check nothing")
+  val preCheck = TaskKey[DoctorResult]("pre-check","use preCheck := briefCheck or strictCheck or noCheck")
+
+  val doctor = TaskKey[DoctorResult]("doctor","Check can deploy")
+
   val tagDockerImage = TaskKey[String]("tag-docker-image","Tag docker image to push")
   val loginDocker = TaskKey[Unit]("login-docker","Login docker with ECR auth")
   val pushToEcr = TaskKey[Unit]("push-to-ecr","Push image to ecr")
@@ -74,6 +80,7 @@ class Keys {
   // collaborate tasks (call other tasks)
 
 
+  val checkPhase = TaskKey[Unit]("check-phase","depends on preCheck task")
   val buildPhase = TaskKey[Unit]("build-phase","Build docker image phase")
   val pushPhase = TaskKey[Unit]("push-phase","Push docker image phase")
   val makeAppVersionPhase = TaskKey[Unit]("make-app-version-phase","Make EBS app version phase")
