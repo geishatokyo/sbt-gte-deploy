@@ -21,7 +21,7 @@ PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイ�
 
 #### 2:sbtでPluginの設定
 
-※ まだMavenCentralにPushしていないため、Resolver設定をしないと取得出来ません。
+※ まだMavenCentralにPushしていないため、ソースからビルドしてpublishLocalしないと動きません
 
 project/plugins.sbt
 ``` scala
