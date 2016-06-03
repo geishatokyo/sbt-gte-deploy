@@ -1,12 +1,14 @@
 sbtPlugin := true
 
+publishMavenStyle := true
+
 name := "sbt-gte-deploy"
 
 organization := "com.geishatokyo"
 
 description := "GeishaTokyo's deploy plugin.Deploy to AWS beanstalk with Docker"
 
-version := "0.0.1-SNAPSHOT"
+version := "0.0.1"
 
 resolvers += Resolver.sbtPluginRepo("releases")
 

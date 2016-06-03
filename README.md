@@ -5,6 +5,8 @@
 芸者東京で使っているデプロイプラグインです。<br />
 PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイを行います。
 
+
+
 ## 事前準備
 
 ### ビルドマシン
@@ -13,7 +15,23 @@ PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイ�
 
 ローカルでdockerコマンドを使える状態にして下さい。
 
-#### 2:AWS access/secret key(Optional)
+#### 2:sbtでPluginの設定
+
+※ まだMavenCentralにPushしていないため、Resolver設定をしないと取得出来ません。
+
+project/plugins.sbt
+``` scala
+addSbtPlugin("com.geishatokyo" % "sbt-gte-deploy" % "0.0.1")
+```
+
+build.sbt
+```scala
+enablePlugins(gtedeploy.GTEDeployPlugin)
+```
+
+を追加して下さい。
+
+#### 3:AWS access/secret key(Optional)
 
 [Config](Configure)を参照して下さい。
 
@@ -76,5 +94,5 @@ sbt gdep-publish production
 
 ## Reference
 
-* Keys
+* [Keys](doc/Keys.md)
 * [Config](doc/Config.md)
