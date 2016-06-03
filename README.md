@@ -9,6 +9,10 @@ PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイ�
 
 ## 事前準備
 
+'show gdep:doctor'を実行することで、環境が整っているかチェックが出来ます。  
+また、'show gdep:doctor'実行後'last gdep:doctor'で詳細や解決策を見ることが出来ます。
+
+
 ### ビルドマシン
 
 #### 1:Docker
@@ -37,8 +41,6 @@ enablePlugins(gtedeploy.GTEDeployPlugin)
 
 ### AWS
 
-(開発中)
-```gdep:doctor``` に足りていない設定が出力されます。<br />
 ドキュメント中の{{appName}},{{staging}}は、sbtで設定した値を使用して下さい。<br />
 また、このドキュメントは、デフォルトでpluginを使う場合の設定です。sbtで設定変更可能です。
 
@@ -83,6 +85,12 @@ appName := name
 
 
 ## デプロイ方法
+
+
+```
+sbt gdep:doctor
+```
+で環境が整っている事を確認できます。
 
 ```
 sbt gdep-publish

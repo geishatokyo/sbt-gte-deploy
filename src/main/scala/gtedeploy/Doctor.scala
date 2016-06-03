@@ -57,6 +57,8 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
     val (appNameInEBS,envName,appVersion,replaceAppVersion) = ebsSet
 
     val reports = Seq(
+      checkGit(),
+      checkDocker(),
       checkECRRepositoryExists(appNameInECR,ecrRepository,ecrRegion,conf),
       checkS3(bucketName,s3Region,conf)
     ) ++ checkBeanstalk(ebsRegion,appNameInEBS,envName,appVersion,replaceAppVersion,conf)
@@ -71,6 +73,37 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
       DoctorResult.Ok
     }
   }
+
+  private def checkGit() = {
+    val r = Process(Seq("git","status")).!
+    if(r == 0){
+      Ok
+    }else{
+      Warning(
+        "NotGitRepo",
+        "Not git repository",
+        "Git is not installed or this directory is not under git.",
+        "Execute 'git init'",
+        "Install git"
+      )
+    }
+  }
+
+  private def checkDocker() = {
+    val r = Process(Seq("docker","ps")).!
+    if(r == 0){
+      Ok
+    }else{
+      Error(
+        "DockerNotRunning",
+        "Docker is not running",
+        "Docker is not installed or not running.",
+        "Install docker",
+        "Run docker"
+      )
+    }
+  }
+
 
   private def checkECRRepositoryExists(_appName: String,
                                        fullUri: Option[String],
