@@ -9,6 +9,13 @@ import scala.concurrent.duration.FiniteDuration
   */
 class Keys {
 
+  // configurations
+
+  val GTEDeploy = config("gdep")
+
+  val ECR = config("ecr").extend(GTEDeploy)
+  val EBS = config("ebs").extend(GTEDeploy)
+  val S3 = config("s3").extend(GTEDeploy)
 
   // static sttings
 
@@ -28,6 +35,9 @@ class Keys {
   val configFile = SettingKey[File]("config-file","Path to config(Default:deploy/gdep.conf)")
 
   // dynamic settings
+
+  val doctor = TaskKey[DoctorResult]("doctor","Check can deploy")
+
   val gteDeployConf = TaskKey[GTEDeployConf]("gte-deploy-conf","Load GTEDeploy config")
 
   val workingDir = TaskKey[File]("working-dir","Directory to export temp files.(default: target/gtedeploy)")
@@ -62,6 +72,7 @@ class Keys {
   val waitFinishDeploy = TaskKey[Boolean]("wait-finish-deploy","Wait until finish deploy")
 
   // collaborate tasks (call other tasks)
+
 
   val buildPhase = TaskKey[Unit]("build-phase","Build docker image phase")
   val pushPhase = TaskKey[Unit]("push-phase","Push docker image phase")

@@ -13,21 +13,14 @@ import scala.concurrent.duration._
 /**
   * Created by takezoux2 on 2016/05/31.
   */
-object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
+object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zipper {
 
 
   override def requires: Plugins = com.typesafe.sbt.packager.docker.DockerPlugin
 
   private val DockerKeys = com.typesafe.sbt.packager.docker.DockerPlugin.autoImport
 
-  object autoImport extends Keys{
-    val GTEDeploy = config("gdep")
-
-    val ECR = config("ecr").extend(GTEDeploy)
-    val EBS = config("ebs").extend(GTEDeploy)
-    val S3 = config("s3").extend(GTEDeploy)
-
-  }
+  object autoImport extends Keys
 
   import autoImport._
 
@@ -38,7 +31,8 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
       ecrSettings ++
       ebsSettings ++
       gitSettings ++
-      phaseSettings
+      phaseSettings ++
+      doctorSettings
     ) ++ Seq(
       commands ++= deployCommands
     )

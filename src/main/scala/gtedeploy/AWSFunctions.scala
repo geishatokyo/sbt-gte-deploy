@@ -99,6 +99,48 @@ trait AWSFunctions {
       (res.getHealthStatus, res.getColor)
 
     }
+
+    def describeApplication(appName: String)(implicit cli: AWSElasticBeanstalkClient) = {
+      val res = cli.describeApplications(
+        new DescribeApplicationsRequest().
+          withApplicationNames(appName))
+
+      if(res.getApplications.size() > 0){
+        Some(res.getApplications.get(0))
+      }else{
+        None
+      }
+    }
+
+    def describeEnvironment(appName : String,envName: String)(implicit client: AWSElasticBeanstalkClient) = {
+      val res = client.describeEnvironments(
+        new DescribeEnvironmentsRequest().
+          withApplicationName(appName).
+          withEnvironmentNames(envName))
+
+      if(res.getEnvironments.size > 0) {
+        val env = res.getEnvironments.get(0)
+        Some(env)
+      }else{
+        None
+      }
+
+    }
+
+    def describeAppVersion(appName: String,appVersion: String)(implicit client: AWSElasticBeanstalkClient) = {
+      val res = client.describeApplicationVersions(
+        new DescribeApplicationVersionsRequest().
+          withApplicationName(appName).
+          withVersionLabels(appVersion)
+      )
+
+      if(res.getApplicationVersions.size() > 0){
+        Some(res.getApplicationVersions.get(0))
+      }else{
+        None
+      }
+    }
+
   }
 
 
@@ -111,6 +153,11 @@ trait AWSFunctions {
     }finally{
       client.shutdown()
     }
+  }
+
+  def existsBucket(bucket: String)(implicit amazonS3Client: AmazonS3Client) = {
+    val res = amazonS3Client.getBucketLocation(bucket)
+    res
   }
 
   def upload(bucket: String,key: String,file: File)(implicit amazonS3Client: AmazonS3Client) = {
