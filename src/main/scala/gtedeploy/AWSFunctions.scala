@@ -15,15 +15,13 @@ import com.amazonaws.services.s3.AmazonS3Client
   */
 trait AWSFunctions {
 
-
-
   def toRegion(region: String) = {
     Region.getRegion(Regions.fromName(region))
   }
 
-  def useEcrClient[T](region: String)( scope: AmazonECR => T) : T = {
+  def useEcrClient[T](conf: GTEDeployConf,region: String)( scope: AmazonECR => T) : T = {
 
-    val client = new AmazonECRClient()
+    val client = conf.awsAuth.map(cr => new AmazonECRClient(cr)).getOrElse(new AmazonECRClient())
     client.setRegion(toRegion(region))
 
     try{
@@ -48,9 +46,9 @@ trait AWSFunctions {
 
 
 
-  def useEBSClient[T](region: String)(func: AWSElasticBeanstalkClient => T) : T = {
+  def useEBSClient[T](conf: GTEDeployConf,region: String)(func: AWSElasticBeanstalkClient => T) : T = {
 
-    val client = new AWSElasticBeanstalkClient()
+    val client = conf.awsAuth.map(cr => new AWSElasticBeanstalkClient(cr)).getOrElse(new AWSElasticBeanstalkClient())
     client.setRegion(toRegion(region))
 
     try{
@@ -104,8 +102,8 @@ trait AWSFunctions {
   }
 
 
-  def useS3Client[T](region: String)(func: AmazonS3Client => T) : T = {
-    val client = new AmazonS3Client()
+  def useS3Client[T](conf: GTEDeployConf,region: String)(func: AmazonS3Client => T) : T = {
+    val client =  conf.awsAuth.map(cr => new AmazonS3Client(cr)).getOrElse(new AmazonS3Client())
     client.setRegion(toRegion(region))
 
     try{
@@ -120,7 +118,6 @@ trait AWSFunctions {
     key
   }
 
-
   class EndpointMap(name: String,map: Map[String,String]){
     def apply(region: String) = {
       map.getOrElse(region,{
@@ -128,6 +125,7 @@ trait AWSFunctions {
       })
     }
   }
+
   object EndpointMap{
     def apply(name: String)(elems: (String,String)*) = new EndpointMap(name,elems.toMap)
   }

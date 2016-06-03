@@ -52,7 +52,8 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
     ebextensionsDir := None,
     dockerrunTemplateFile := None,
     deployTimeout := 10.minutes,
-    envName <<= (staging,appName in EBS) map getEnvName
+    envName <<= (staging,appName in EBS) map getEnvName,
+    configFile := file("deploy/gdep.conf")
   )
 
   def deployCommands = {
@@ -90,18 +91,23 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
 
 
   def commonSettingsInGTEDeploy = Seq(
-    workingDir <<= (baseDirectory) map getWorkingDir
+    workingDir <<= (baseDirectory) map getWorkingDir,
+    gteDeployConf <<= (configFile) map getGTEDeployConf
   )
 
   def getWorkingDir(baseDir: File) =
     new File(baseDir,"target/gtedeploy")
 
+  def getGTEDeployConf(file: File) =
+    GTEDeployConf.load(file)
+
+
   // ecr settings
   def ecrSettings : Seq[Setting[_]] = Seq(
-    repositoryUri <<= (ecrRepository,appName in ECR,awsRegion in ECR,streams) map getRepositoryUri,
+    repositoryUri <<= (ecrRepository,appName in ECR,awsRegion in ECR,streams,gteDeployConf) map getRepositoryUri,
     dockerImageNameToPush <<= (repositoryUri,version in GTEDeploy) map getDockerImageNameToPush,
     tagDockerImage <<= (DockerKeys.dockerTarget in DockerKeys.Docker,dockerImageNameToPush,streams) map taskTagDockerImage,
-    loginDocker <<= (awsRegion in ECR,streams) map taskLoginDocker,
+    loginDocker <<= (awsRegion in ECR,streams,gteDeployConf) map taskLoginDocker,
     pushToEcr <<= (dockerImageNameToPush,streams) map taskPushToEcr
   )
 
@@ -114,10 +120,10 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
     * @param streams
     * @return
     */
-  def getRepositoryUri(ecrRepo: Option[String],appName: String,region: String,streams: TaskStreams) = {
+  def getRepositoryUri(ecrRepo: Option[String],appName: String,region: String,streams: TaskStreams, conf: GTEDeployConf) = {
     val log = streams.log
     ecrRepo.getOrElse {
-      useEcrClient(region){ client =>
+      useEcrClient(conf,region){ client =>
         val res = client.describeRepositories(new DescribeRepositoriesRequest().
           withRepositoryNames(appName))
 
@@ -150,10 +156,10 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
       throw new RuntimeException("Fail to tag docker image.")
     }
   }
-  def taskLoginDocker(region: String,s: TaskStreams) : Unit = {
+  def taskLoginDocker(region: String,s: TaskStreams,conf: GTEDeployConf) : Unit = {
     val log = s.log
 
-    val (username,password,endpoint) = useEcrClient("us-east-1"){ implicit client =>
+    val (username,password,endpoint) = useEcrClient(conf,region){ implicit client =>
       getDockerLoginInfo()
     }
     val fullCommand = s"docker login -u ${username} -p ${password} -e none ${endpoint}"
@@ -190,12 +196,12 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
     makeEbsZip <<= (dockerrunTemplate,repositoryUri,DockerKeys.dockerExposedPorts in DockerKeys.Docker,
       ebextensionsDir,ebsZipFile,streams
       ) map taskMakeEbsZip,
-    uploadEbsZip <<= (awsRegion in S3,ebsZipBucketName,ebsZipFile,streams) map taskUploadEbsZip,
+    uploadEbsZip <<= (awsRegion in S3,ebsZipBucketName,ebsZipFile,streams,gteDeployConf) map taskUploadEbsZip,
     createAppVersion <<= (awsRegion in EBS,ebsZipBucketName,ebsZipFile,
       appName in EBS, versionLabel,versionLabelDescription,
-      replaceAppVersion,streams) map taskCreateAppVersion,
-    updateEnvironment <<= (awsRegion in EBS,appName in EBS,envName in EBS,versionLabel) map taskUpdateEnvironment,
-    waitFinishDeploy <<= (awsRegion in EBS,appName,envName,deployTimeout,streams) map taskWaitFinishDeploy
+      replaceAppVersion,streams,gteDeployConf) map taskCreateAppVersion,
+    updateEnvironment <<= (awsRegion in EBS,appName in EBS,envName in EBS,versionLabel,gteDeployConf) map taskUpdateEnvironment,
+    waitFinishDeploy <<= (awsRegion in EBS,appName,envName,deployTimeout,streams,gteDeployConf) map taskWaitFinishDeploy
   )
 
   def getEnvName(staging: String,appName: String) =
@@ -264,8 +270,8 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
     zipPath
   }
 
-  def taskUploadEbsZip(region: String,bucketName: String,zipFile: File,s: TaskStreams) : Unit = {
-    useS3Client(region){ implicit s3 =>
+  def taskUploadEbsZip(region: String,bucketName: String,zipFile: File,s: TaskStreams,conf: GTEDeployConf) : Unit = {
+    useS3Client(conf,region){ implicit s3 =>
       s.log.info(s"Upload ${zipFile} to S3[${bucketName}:${zipFile.getName}]")
       upload(bucketName,zipFile.getName,zipFile)
     }
@@ -278,10 +284,10 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
                            versionLabel: String,
                            description: String,
                            replace : Boolean,
-                           s: TaskStreams) : Unit = {
+                           s: TaskStreams,conf: GTEDeployConf) : Unit = {
 
     val fileKey = zipFile.getName
-    useEBSClient(region){implicit c =>
+    useEBSClient(conf,region){implicit c =>
       val exists = ebs.existsAppVersion(appName,versionLabel)
 
       if(!exists){
@@ -293,27 +299,29 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
         ebs.createAppVersion(appName,versionLabel,description,bucketName,fileKey)
       }else{
         s.log(s"${appName}:${versionLabel} already exists")
+        throw new RuntimeException("Fail to upload ebs zip.Because save version exists.")
       }
     }
   }
 
-  def taskUpdateEnvironment(region: String,appName: String,envName: String, versionLabel: String) = {
-    useEBSClient(region)(implicit client =>
+  def taskUpdateEnvironment(region: String,appName: String,envName: String, versionLabel: String, conf: GTEDeployConf) = {
+    useEBSClient(conf,region)(implicit client =>
       ebs.updateEnvironment(appName,envName,versionLabel)
     )
   }
 
-  def taskWaitFinishDeploy(region: String, appName: String, envName: String, timeout: FiniteDuration, s: TaskStreams) = {
-    val start = new java.util.Date().getTime
-    useEBSClient(region) { implicit c =>
+  def taskWaitFinishDeploy(region: String, appName: String, envName: String, timeout: FiniteDuration, s: TaskStreams, conf: GTEDeployConf) : Boolean = {
+    import java.util.Date
+    val start = new Date().getTime
+    useEBSClient(conf,region) { implicit c =>
 
       @tailrec
-      def waitWhile(st : String) : (String,String) = {
+      def waitUntil(st : String,until: Long) : (String,String) = {
         Thread.sleep(1000)
         val (status, color) = ebs.getHelth(appName, envName)
         if(status == st) {
-          if((new java.util.Date().getTime - start) < timeout.toMillis){
-            waitWhile(st)
+          if(new Date().getTime < until){
+            waitUntil(st,until)
           }else {
             (status,color)
           }
@@ -323,10 +331,14 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
         }
       }
 
-      val (st,cl) = waitWhile("Ok")
+      val (st,cl) = waitUntil("Ok",start + 10.seconds.toMillis)
+      if(cl == "Green"){
+        s.log.info(s"Stat:${st}(${cl}).Maybe deploy is not triggered.")
+        return true
+      }
       s.log.info(s"Stat change: ${st}(${cl})")
       val (lastS,lastC) = if(st == "Info"){
-        waitWhile("Info")
+        waitUntil("Info",start + timeout.toMillis)
       }else (st,cl)
 
       s.log.info(s"Last Stat: ${lastS}(${lastC})")

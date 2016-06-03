@@ -25,7 +25,10 @@ class Keys {
 
   val deployTimeout = SettingKey[FiniteDuration]("deploy-timeout","Deploy timeout")
 
+  val configFile = SettingKey[File]("config-file","Path to config(Default:deploy/gdep.conf)")
+
   // dynamic settings
+  val gteDeployConf = TaskKey[GTEDeployConf]("gte-deploy-conf","Load GTEDeploy config")
 
   val workingDir = TaskKey[File]("working-dir","Directory to export temp files.(default: target/gtedeploy)")
   val envName = TaskKey[String]("env-name","Deploy environment name on BeanStalk.")

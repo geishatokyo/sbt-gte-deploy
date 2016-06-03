@@ -15,16 +15,7 @@ PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイ�
 
 #### 2:AWS access/secret key(Optional)
 
-~/.aws/credentials
-
-```
-[default]
-aws_access_key_id = {{Your access key}}
-aws_secret_access_key = {{Your secret access key}}
-```
-
-を作成して下さい。
-※ここで設定しない場合は、build.sbtで設定する必要があります。
+[Config](Configure)を参照して下さい。
 
 ### AWS
 
@@ -55,6 +46,7 @@ EBSのVersionLabel用のファイルを置くバケットです。<br />
 #### IAM Role
 
 作成したEBSが、ECR,S3へのアクセス権を持っていることを確認してください。
+また、AccessKeyを設定していない場合は、ビルドマシンにEBS,ECR,S3へのアクセス権を付与して下さい。
 
 ## build.sbtの設定
 
@@ -84,5 +76,5 @@ sbt gdep-publish production
 
 ## Reference
 
-Keys
-
+* Keys
+* [Config](doc/Config.md)
