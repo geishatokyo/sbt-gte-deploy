@@ -299,7 +299,7 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
         ebs.createAppVersion(appName,versionLabel,description,bucketName,fileKey)
       }else{
         s.log(s"${appName}:${versionLabel} already exists")
-        throw new RuntimeException("Fail to upload ebs zip.Because save version exists.")
+        throw new RuntimeException("Fail to upload ebs zip.Same version already exists.")
       }
     }
   }
@@ -314,30 +314,34 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
     import java.util.Date
     val start = new Date().getTime
     useEBSClient(conf,region) { implicit c =>
-
       @tailrec
-      def waitUntil(st : String,until: Long) : (String,String) = {
+      def waitUntil(st : String,until: Long,count : Int = 0) : (String,String) = {
         Thread.sleep(1000)
+        if(count % 5 == 0) print(".")
         val (status, color) = ebs.getHelth(appName, envName)
         if(status == st) {
           if(new Date().getTime < until){
-            waitUntil(st,until)
+            waitUntil(st,until,count + 1)
           }else {
+            println()
             (status,color)
           }
         }
         else {
+          println()
           (status,color)
         }
       }
 
-      val (st,cl) = waitUntil("Ok",start + 10.seconds.toMillis)
-      if(cl == "Green"){
+      print("Waiting start deploy")
+      val (st,cl) = waitUntil("Ok",start + 30.seconds.toMillis)
+      if(st == "Ok"){
         s.log.info(s"Stat:${st}(${cl}).Maybe deploy is not triggered.")
         return true
       }
       s.log.info(s"Stat change: ${st}(${cl})")
       val (lastS,lastC) = if(st == "Info"){
+        print("Deploying")
         waitUntil("Info",start + timeout.toMillis)
       }else (st,cl)
 
@@ -347,7 +351,7 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
         s.log.warn("Timeout to deploy")
         false
       } else if (lastC == "Green") {
-        s.log.info("Success to deploy")
+        s.log.success("Success to deploy")
         true
       } else {
         s.log.info("Fail to deploy")
@@ -407,7 +411,7 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
   }
 
   def runMakeVersionLabelPhase() = {
-    makeVersionLabelPhase := (Def.taskDyn {
+    makeAppVersionPhase := (Def.taskDyn {
       val log = streams.value.log
       log.debug("-- Make version label phase --")
 
@@ -431,7 +435,7 @@ object GTEDeployPlugin extends AutoPlugin with AWSFunctions with Zipper {
     allPhase := Def.sequential(
       buildPhase,
       pushPhase,
-      makeVersionLabelPhase,
+      makeAppVersionPhase,
       deployPhase,
       waitFinishPhase
     ).value

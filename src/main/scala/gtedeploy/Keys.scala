@@ -65,7 +65,7 @@ class Keys {
 
   val buildPhase = TaskKey[Unit]("build-phase","Build docker image phase")
   val pushPhase = TaskKey[Unit]("push-phase","Push docker image phase")
-  val makeVersionLabelPhase = TaskKey[Unit]("make-version-label-phase","Make EBS version label phase")
+  val makeAppVersionPhase = TaskKey[Unit]("make-app-version-phase","Make EBS app version phase")
 
   val deployPhase = TaskKey[Unit]("deploy-phase","Deploy phase")
   val waitFinishPhase = TaskKey[Unit]("wait-finish-phase","Wait finish phase")
