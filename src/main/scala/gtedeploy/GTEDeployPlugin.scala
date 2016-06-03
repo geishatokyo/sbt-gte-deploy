@@ -28,6 +28,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   override lazy val projectSettings =
     commonSettings ++ inConfig(GTEDeploy)(
       commonSettingsInGTEDeploy ++
+      checkSettings ++
       ecrSettings ++
       ebsSettings ++
       gitSettings ++
