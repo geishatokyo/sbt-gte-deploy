@@ -208,7 +208,10 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
           checkAppVersionExists(region,appName,appVersion,replace)
         )
       }else{
-        Seq(r)
+        Seq(
+          r,
+          envNotFoundError(appName,envName,region)
+        )
       }
     }
   }
@@ -221,10 +224,10 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
         }
         case None => {
           Error(
-            "ECRAppNotFound",
+            "EBSAppNotFound",
             s"${appName} not found",
             s"${appName} in ${region} not found",
-            "Create application",
+            "Create new ebs application",
             """Set exist appName
               |appName in EBS := "{appName}"
             """.stripMargin
@@ -276,24 +279,30 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
           }
         }
         case None => {
-          Error(
-            "EBSEnvNotFound",
-            s"${appName}:${envName} not found",
-            s"${appName}:${envName} in ${region} not found",
-            "Create environment as Docker container",
-            """Switch staging to Docker container env
-              |staging := "{otherStage}"
-            """.stripMargin,
-            """(not recommend)Change envName to Docker container env
-              |envName := {environmentName}
-            """.stripMargin
-          )
+          envNotFoundError(appName,envName,region)
         }
       }
     }catch{
       case t : Throwable=> toError("EBS",t)
     }
   }
+
+  private def envNotFoundError(appName: String, envName: String, region: String) = {
+
+    Error(
+      "EBSEnvNotFound",
+      s"${appName}:${envName} not found",
+      s"${appName}:${envName} in ${region} not found",
+      "Create environment as Docker container",
+      """Switch staging to Docker container env
+        |staging := "{otherStage}"
+      """.stripMargin,
+      """(not recommend)Change envName to Docker container env
+        |envName := {environmentName}
+      """.stripMargin
+    )
+  }
+
 
   def checkAppVersionExists(region: String,appName: String,appVersion: String,replace: Boolean)(implicit cli: AWSElasticBeanstalkClient) = {
     ebs.describeAppVersion(appName,appVersion) match{

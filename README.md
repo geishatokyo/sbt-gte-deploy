@@ -73,13 +73,12 @@ EBSのVersionLabel用のファイルを置くバケットです。<br />
 ```
 appName := {{your app name}}
 
-awsRegion in ECR := "us-east-1" // 現在は一部のRegionでのみ使用可能です。
 ```
 
 の追加だけで動作します。
 
 ```
-appName := name
+appName := name.value
 ```
 とすることで、プロジェクトの名前をそのまま利用可能です。
 
@@ -91,6 +90,11 @@ appName := name
 sbt gdep:doctor
 ```
 で環境が整っている事を確認できます。
+また、問題があった場合は、
+```
+last gdep:doctor
+```
+を実行することで、解決方法も確認出来ます。
 
 ```
 sbt gdep-publish
@@ -102,5 +106,6 @@ sbt gdep-publish production
 
 ## Reference
 
+* [Commands](doc/Commands.md)
 * [Keys](doc/Keys.md)
 * [Config](doc/Config.md)

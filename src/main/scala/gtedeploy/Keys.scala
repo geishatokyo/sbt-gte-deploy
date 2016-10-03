@@ -89,5 +89,5 @@ class Keys {
   val waitFinishPhase = TaskKey[Unit]("wait-finish-phase","Wait finish phase")
 
   val allPhase = TaskKey[Unit]("all-phase","run all phase")
-
+  val skipCheckPhase = TaskKey[Unit]("skip-check-phase","Skip check phase and force deploy")
 }

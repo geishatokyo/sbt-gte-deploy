@@ -1,0 +1,20 @@
+{
+  "AWSEBDockerrunVersion": "2",
+  "containerDefinitions" : [
+    {
+        "name": "my-app",
+        "image": "${dockerImageURI}",
+        "memory" : 512,
+        "portMappings": [
+          {
+            "hostPort": 80,
+            "containerPort": ${port}
+          },
+          {
+            "hostPosrt": 443,
+            "containerPort": ${sslPort}
+          }
+        ]
+    }
+  ]
+}

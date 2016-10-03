@@ -58,7 +58,9 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
 
     val ext = Project.extract(state)
 
-    val deployState = args.headOption match{
+    val (ops,params) = args.partition(_.startsWith("-"))
+
+    val deployState = params.headOption match{
       case Some(st) => {
         state.log.info(s"Switch staging = ${st}")
         ext.append(staging := st,state)
@@ -68,8 +70,12 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
       }
     }
 
+    val skipCheck = ops.contains("-skip-check")
+
+    val phaseTask = if(skipCheck) skipCheckPhase else allPhase
+
     deployState.log.info("Begin deploy")
-    Project.runTask(allPhase in GTEDeploy,deployState) match{
+    Project.runTask(phaseTask in GTEDeploy,deployState) match{
       case Some((successState,Value(_))) => {
         state
       }
@@ -241,7 +247,10 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   def getDockerrunTemplate(templateFile: Option[File]) = {
     templateFile match{
       case Some(file) => sbt.IO.read(file)
-      case None => DockerrunTemplate
+      case None => new String(
+        sbt.IO.readBytes(
+          getClass.getClassLoader.getResourceAsStream("Dockerrun.aws.json.v2template")),
+        "utf-8")
     }
   }
 
@@ -414,7 +423,8 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     runMakeVersionLabelPhase(),
     runDeployPhase(),
     runWaitFinishPhase(),
-    runAllPhase()
+    runAllPhase(),
+    runSkipCheckPhase()
   )
 
   def runCheckPhase() = {
@@ -467,6 +477,15 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   def runAllPhase() = {
     allPhase := Def.sequential(
       checkPhase,
+      buildPhase,
+      pushPhase,
+      makeAppVersionPhase,
+      deployPhase,
+      waitFinishPhase
+    ).value
+  }
+  def runSkipCheckPhase() = {
+    skipCheckPhase := Def.sequential(
       buildPhase,
       pushPhase,
       makeAppVersionPhase,

@@ -30,7 +30,7 @@ staging := "stage1"
 
 Type:String  
 Available Configuration:ECR,EBS,S3  
-Default:ap-northeast-1
+Default:ap-northeast-1 (is japan)
 
 AWS regions.
 
