@@ -323,7 +323,7 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
   }
 
   private def envNotFoundError(appName: String, envName: String, region: String, s: TaskStreams, conf: GTEDeployConf) = {
-
+    // 安定しないので、自動修復機能は停止しておく
     Error(
       "EBSEnvNotFound",
       s"${appName}:${envName} not found",
@@ -335,9 +335,9 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
       """(not recommend)Change envName to existing Docker container env
         |envName := "{environmentName}"
       """.stripMargin
-    ).withAutoFix(s"Create EBS Environment:${appName}/${envName}(Not Free!!!)",
+    )/*.withAutoFix(s"Create EBS Environment:${appName}/${envName}(Not Free!!!)",
       () => createEBSEnvironment(region,appName,envName,s,conf)
-    )
+    )*/
   }
 
 

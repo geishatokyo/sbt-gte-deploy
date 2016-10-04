@@ -107,6 +107,21 @@ Default:None
 
 Template file to create Dockerrun.aws.json.
 
+### dockerrunTemplateArgs(Optional)
+
+Type:Seq[(String,String)]
+Default:see below
+
+Args to replace in DockerrunTemplateFile.
+Default args are
+
+|key|value|
+|${appName}|SettingKey of appName|
+|${staging}|SettingKey of staging|
+|${dockerImageURI}|TaskKey of repositoryUri|
+|${port}|First value of dockerExposedPorts or 9000|
+|${sslPort}|Second value of dockerExposedPorts or 9443|
+
 
 ### ebextensionsDir(Optional)
 

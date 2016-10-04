@@ -2,7 +2,7 @@
   "AWSEBDockerrunVersion": "2",
   "containerDefinitions" : [
     {
-        "name": "my-app",
+        "name": "${appName}",
         "image": "${dockerImageURI}",
         "memory" : 512,
         "environment": [

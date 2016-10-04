@@ -157,13 +157,11 @@ trait AWSFunctions {
     }
 
     def createEnvironment(appName: String, envName: String)(implicit client: AWSElasticBeanstalkClient) = {
-      // TODO This action is not free.Impl carefully.
+      // TODO Unstable.Make stable
       // TODO Support other regions
 
       val appVersion = "サンプルアプリケーション"
-      val appVersion2 = "Sample Application"
-      if(!existsAppVersion(appName,appVersion) &&
-      !existsAppVersion(appName,appVersion2)){
+      if(!existsAppVersion(appName,appVersion)){
         client.createApplicationVersion(new CreateApplicationVersionRequest().
           withApplicationName(appName).
           withVersionLabel(appVersion).

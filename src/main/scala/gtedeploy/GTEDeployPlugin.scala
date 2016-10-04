@@ -219,7 +219,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     versionLabel := {(version in GTEDeploy).value},
     versionLabelDescription := commitId.value,
     dockerrunTemplate <<= (dockerrunTemplateFile) map getDockerrunTemplate,
-    dockerrunTemplateArgs <<= (staging,repositoryUri,version in GTEDeploy,DockerKeys.dockerExposedPorts in DockerKeys.Docker) map getDockerrunTemplateArgs,
+    dockerrunTemplateArgs <<= (appName in EBS,staging,repositoryUri,version in GTEDeploy,DockerKeys.dockerExposedPorts in DockerKeys.Docker) map getDockerrunTemplateArgs,
     makeEbsZip <<= (dockerrunTemplate,dockerrunTemplateArgs,
       ebextensionsDir,ebsZipFile,streams
       ) map taskMakeEbsZip,
@@ -265,13 +265,16 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   }
 
   def getDockerrunTemplateArgs(
+                              appName: String,
                               staging: String,
                               repositoryUri: String,
                               version: String,
                               ports: Seq[Int]) = {
     Seq(
+      "appName" -> appName,
       "staging" -> staging,
       "dockerImageURI" -> repositoryUri,
+      "dockerImageUri" -> repositoryUri,
       "port" -> ports.headOption.getOrElse(9000).toString,
       "sslPort" -> ports.drop(1).headOption.getOrElse(9443).toString
     )
@@ -290,7 +293,11 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     }
 
     if(f.exists()){
-      s.log.info(s"${exportPath} already exists")
+      s.log.info(
+        s"""${exportPath} already exists.
+           |-- Add setting --
+           |dockerrunTemplateFile := Some("${exportPath}")
+         """.stripMargin)
     }else {
       val template = getDockerrunTemplate(None)
       sbt.IO.write(f, template)

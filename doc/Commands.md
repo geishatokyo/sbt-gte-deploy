@@ -22,3 +22,12 @@ You can see detail by
 ```
 last gdep:deploy
 ```
+
+### gdep:genDockerrunAwsJson
+
+```
+gdep:genDockerrunAwsJson [{pathToGenerate}]
+```
+Generate Dockerrun.aws.json template.
+If not pass the path, file is generated to "deploy/Dockerrun.aws.json".
+

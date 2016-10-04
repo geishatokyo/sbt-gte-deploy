@@ -9,8 +9,8 @@ PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイ�
 
 ## 事前準備
 
-'show gdep:doctor'を実行することで、環境が整っているかチェックが出来ます。  
-また、'show gdep:doctor'実行後'last gdep:doctor'で詳細や解決策を見ることが出来ます。
+'gdep:doctor'を実行することで、環境が整っているかチェックが出来ます。  
+また、'gdep:doctor'実行後'last gdep:doctor'で詳細や解決策を見ることが出来ます。
 
 
 ### ビルドマシン
@@ -25,7 +25,7 @@ PlayFrameworkをDockerImage化し、AWS ECRにPushし、AWS EBSへデプロイ�
 
 project/plugins.sbt
 ``` scala
-addSbtPlugin("com.geishatokyo" % "sbt-gte-deploy" % "0.0.1")
+addSbtPlugin("com.geishatokyo" % "sbt-gte-deploy" % "0.1.1")
 ```
 
 build.sbt
@@ -113,13 +113,11 @@ sbt gdep:autoFix
 で自動で環境を構築します。
 
 * Docker用のECR repositoryの作成
-* AppVersion保存用のS3 bucketの作成
+* EBS AppVersion保存用のS3 bucketの作成
 * EBS Applicationの作成
-* EBS Application Environmentの作成
 
 が行えます。
-Environmentの作成の場合、課金が発生するため注意して下さい。
-
+EBS Environmentは、AWS Consoleなどから自分で作成を行って下さい。
 
 ## Reference
 
