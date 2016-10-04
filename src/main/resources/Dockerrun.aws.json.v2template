@@ -5,6 +5,12 @@
         "name": "my-app",
         "image": "${dockerImageURI}",
         "memory" : 512,
+        "environment": [
+          {
+            "name": "staging",
+            "value": "${staging}"
+          }
+        ],
         "portMappings": [
           {
             "hostPort": 80,

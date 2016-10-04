@@ -81,6 +81,7 @@ class Keys {
 
   // collaborate tasks (call other tasks)
 
+  val genDockerrunAwsJson = InputKey[Unit]("gen-dockerrun-aws-json","Generate Dockerrun.aws.json template")
 
   val checkPhase = TaskKey[Unit]("check-phase","depends on preCheck task")
   val buildPhase = TaskKey[Unit]("build-phase","Build docker image phase")

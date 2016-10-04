@@ -228,7 +228,16 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
       appName in EBS, versionLabel,versionLabelDescription,
       replaceAppVersion,streams,gteDeployConf) map taskCreateAppVersion,
     updateEnvironment <<= (awsRegion in EBS,appName in EBS,envName in EBS,versionLabel,gteDeployConf) map taskUpdateEnvironment,
-    waitFinishDeploy <<= (awsRegion in EBS,appName,envName,deployTimeout,streams,gteDeployConf) map taskWaitFinishDeploy
+    waitFinishDeploy <<= (awsRegion in EBS,appName,envName,deployTimeout,streams,gteDeployConf) map taskWaitFinishDeploy,
+    genDockerrunAwsJson := {
+      import sbt.complete.Parsers.spaceDelimited
+      val args: Seq[String] = spaceDelimited("export path").parsed
+      val s = streams.value
+      args.headOption match{
+        case Some(filePath) => taskGenerateDockerrunAwsJson(filePath,s)
+        case None => taskGenerateDockerrunAwsJson("deploy/Dockerrun.aws.json",s)
+      }
+    }
   )
 
   def getEnvName(staging: String,appName: String) =
@@ -271,6 +280,31 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
 
 
   // ebs tasks
+
+  def taskGenerateDockerrunAwsJson(exportPath: String,s: TaskStreams) = {
+    val d = new File(exportPath)
+    val f = if(d.isDirectory){
+      new File(d,"Dockerrun.aws.json")
+    }else{
+      d
+    }
+
+    if(f.exists()){
+      s.log.info(s"${exportPath} already exists")
+    }else {
+      val template = getDockerrunTemplate(None)
+      sbt.IO.write(f, template)
+
+      s.log.info(
+        s"""
+        |Generate ${exportPath}.
+        |-- Add setting --
+        |dockerrunTemplateFile := Some("${exportPath}")
+        """.stripMargin
+      )
+
+    }
+  }
 
   def taskMakeEbsZip(template: String,templateArgs: Seq[(String,String)],
                            ebextensionsDir: Option[File],
