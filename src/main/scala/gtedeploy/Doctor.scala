@@ -96,6 +96,7 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
 
     printReports(reports,s)
 
+    s.log.info("You can see detail by 'last gdep:doctor'")
     if(reports.exists(_.isInstanceOf[Error])){
       DoctorResult.Error
     }else if(reports.exists(_.isInstanceOf[Warning])){
@@ -278,7 +279,7 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
     try{
       ebs.describeEnvironment(appName,envName) match{
         case Some(e) => {
-          if (e.getSolutionStackName.contains("Docker")) {
+          if (e.getSolutionStackName.toLowerCase().contains("docker")) {
             if(e.getHealthStatus == "Ok") {
               Ok
             }else if(e.getHealthStatus == "Info"){
@@ -349,7 +350,10 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
             "EBSAppVerExists",
             s"${appName}::${appVersion} already exists",
             s"${appName}::${appVersion} in ${region} already exists.Will replace.",
-            "You should replace only in test env."
+            """You should replace only in test env.
+              |Should make replaceAppVersion false in production.
+              |replaceAppVerson := false
+            """.stripMargin
           )
         }else{
           Error(
@@ -358,6 +362,8 @@ trait Doctor { self : AutoPlugin with AWSFunctions =>
             s"${appName}::${appVersion} in ${region} already exists.Deploy will fail.",
             """Increment version
               |version in EBS := "{newVersion}"
+              |or simply
+              |version := "{newVersion}"
             """.stripMargin,
             """(Not recommend)Set replace flag
               |replaceAppVersion := true

@@ -296,7 +296,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
       s.log.info(
         s"""${exportPath} already exists.
            |-- Add setting --
-           |dockerrunTemplateFile := Some("${exportPath}")
+           |dockerrunTemplateFile := Some(file("${exportPath}"))
          """.stripMargin)
     }else {
       val template = getDockerrunTemplate(None)
@@ -306,7 +306,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
         s"""
         |Generate ${exportPath}.
         |-- Add setting --
-        |dockerrunTemplateFile := Some("${exportPath}")
+        |dockerrunTemplateFile := Some(file("${exportPath}"))
         """.stripMargin
       )
 
