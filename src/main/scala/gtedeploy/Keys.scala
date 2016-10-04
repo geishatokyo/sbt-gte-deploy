@@ -49,6 +49,7 @@ class Keys {
   val dockerImageNameToPush = TaskKey[String]("docker-image-name-to-push")
 
   val dockerrunTemplate = TaskKey[String]("dockerrun-template","Load Dockerrun.aws.json template")
+  val dockerrunTemplateArgs = TaskKey[Seq[(String,String)]]("dockerrun-template-args","Generate replace params in Dockerrun.aws.json")
   val ebsZipName = TaskKey[String]("ebs-zip-name","Name of ebs zip file")
   val ebsZipFile = TaskKey[File]("ebs-zip-file","Path to generateed ebs zip file")
 
@@ -91,4 +92,6 @@ class Keys {
 
   val allPhase = TaskKey[Unit]("all-phase","run all phase")
   val skipCheckPhase = TaskKey[Unit]("skip-check-phase","Skip check phase and force deploy")
+
+
 }

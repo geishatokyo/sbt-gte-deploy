@@ -219,7 +219,8 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     versionLabel := {(version in GTEDeploy).value},
     versionLabelDescription := commitId.value,
     dockerrunTemplate <<= (dockerrunTemplateFile) map getDockerrunTemplate,
-    makeEbsZip <<= (dockerrunTemplate,repositoryUri,version in GTEDeploy,DockerKeys.dockerExposedPorts in DockerKeys.Docker,
+    dockerrunTemplateArgs <<= (staging,repositoryUri,version in GTEDeploy,DockerKeys.dockerExposedPorts in DockerKeys.Docker) map getDockerrunTemplateArgs,
+    makeEbsZip <<= (dockerrunTemplate,dockerrunTemplateArgs,
       ebextensionsDir,ebsZipFile,streams
       ) map taskMakeEbsZip,
     uploadEbsZip <<= (awsRegion in S3,ebsZipBucketName,ebsZipFile,streams,gteDeployConf) map taskUploadEbsZip,
@@ -254,33 +255,29 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     }
   }
 
-  val DockerrunTemplate =
-    """{
-      |  "AWSEBDockerrunVersion": "1",
-      |  "Image" : {
-      |    "Name" : "${dockerImageURI}",
-      |    "Update": "true"
-      |  },
-      |  "Ports" : [
-      |    { "ContainerPort": "${port}" },
-      |    { "ContainerPort": "${sslPort}" }
-      |  ],
-      |  "Logging": "/opt/docker/log"
-      |}
-    """.stripMargin
+  def getDockerrunTemplateArgs(
+                              staging: String,
+                              repositoryUri: String,
+                              version: String,
+                              ports: Seq[Int]) = {
+    Seq(
+      "staging" -> staging,
+      "dockerImageURI" -> repositoryUri,
+      "port" -> ports.headOption.getOrElse(9000).toString,
+      "sslPort" -> ports.drop(1).headOption.getOrElse(9443).toString
+    )
+  }
 
 
 
   // ebs tasks
 
-  def taskMakeEbsZip(template: String,repositoryUri: String,version:String,ports: Seq[Int],
+  def taskMakeEbsZip(template: String,templateArgs: Seq[(String,String)],
                            ebextensionsDir: Option[File],
                            zipPath: File,
                            s: TaskStreams) : File = {
     val dockerrun = StringTemplate.render(template,
-      "dockerImageURI" -> s"${repositoryUri}:${version}",
-      "port" -> ports.headOption.getOrElse(9000).toString,
-      "sslPort" -> ports.drop(1).headOption.getOrElse(9443).toString
+      templateArgs:_*
     )
 
     val extentions : List[ZipElem] = ebextensionsDir.map(dir => {
