@@ -64,6 +64,7 @@ class Keys {
   val preCheck = TaskKey[DoctorResult]("pre-check","use preCheck := briefCheck or strictCheck or noCheck")
 
   val doctor = TaskKey[DoctorResult]("doctor","Check can deploy")
+  val autoFix = TaskKey[Unit]("auto-fix","Auto fix environments")
 
   val tagDockerImage = TaskKey[String]("tag-docker-image","Tag docker image to push")
   val loginDocker = TaskKey[Unit]("login-docker","Login docker with ECR auth")

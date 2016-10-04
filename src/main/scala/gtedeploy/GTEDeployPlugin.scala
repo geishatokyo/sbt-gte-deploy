@@ -300,9 +300,9 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   }
 
   def taskUploadEbsZip(region: String,bucketName: String,zipFile: File,s: TaskStreams,conf: GTEDeployConf) : Unit = {
-    useS3Client(conf,region){ implicit s3 =>
+    useS3Client(conf,region){ implicit c =>
       s.log.info(s"Upload ${zipFile} to S3[${bucketName}:${zipFile.getName}]")
-      upload(bucketName,zipFile.getName,zipFile)
+      s3.upload(bucketName,zipFile.getName,zipFile)
     }
   }
 

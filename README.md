@@ -103,6 +103,23 @@ sbt gdep-publish production
 ```
 でデプロイ可能です。
 
+## experimental
+
+### 環境自動作成
+
+```
+sbt gdep:autoFix
+```
+で自動で環境を構築します。
+
+* Docker用のECR repositoryの作成
+* AppVersion保存用のS3 bucketの作成
+* EBS Applicationの作成
+* EBS Application Environmentの作成
+
+が行えます。
+Environmentの作成の場合、課金が発生するため注意して下さい。
+
 
 ## Reference
 
