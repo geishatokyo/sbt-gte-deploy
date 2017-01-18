@@ -1,10 +1,10 @@
 # Commands
 
 
-### gdep-deploy
+### gdep-publish
 
 ```
-gdep deploy [-skip-check] [{staging}]
+gdep-publish [-skip-check] [{staging}]
 ```
 
 Deploy server to EBS.
@@ -22,6 +22,15 @@ You can see detail by
 ```
 last gdep:deploy
 ```
+
+### gdep:pushDockerImage
+
+```
+gdep:pushDockerImage
+```
+
+Build and push Docker image to ECR.
+
 
 ### gdep:genDockerrunAwsJson
 

@@ -52,9 +52,13 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   )
 
   def deployCommands = {
-    Seq(forceDeployCommand)
+    Seq(
+      publishCommand
+    )
   }
-  def forceDeployCommand = Command.args("gdep-publish", "<staging>",Help("publish",("a","b"),"detail"))( (state,args) => {
+
+
+  def publishCommand = Command.args("gdep-publish", "<staging>",Help("publish",("a","b"),"detail"))( (state,args) => {
 
     val ext = Project.extract(state)
 
@@ -400,7 +404,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
         }
       }
 
-      print("Waiting start deploy")
+      s.log.info("Waiting start deploy")
       val (st,cl) = waitUntil("Ok",start + 30.seconds.toMillis)
       if(st == "Ok"){
         s.log.info(s"Stat:${st}(${cl}).Maybe deploy is not triggered.")
@@ -461,6 +465,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     runMakeVersionLabelPhase(),
     runDeployPhase(),
     runWaitFinishPhase(),
+    runUntilPushDockerImage(),
     runAllPhase(),
     runSkipCheckPhase()
   )
@@ -511,6 +516,12 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     waitFinishPhase := {waitFinishDeploy.value}
   }
 
+  def runUntilPushDockerImage() = {
+    untilPushDockerImage := Def.sequential(
+      buildPhase,
+      pushPhase
+    )
+  }
 
   def runAllPhase() = {
     allPhase := Def.sequential(

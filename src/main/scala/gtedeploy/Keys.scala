@@ -91,6 +91,7 @@ class Keys {
   val deployPhase = TaskKey[Unit]("deploy-phase","Deploy phase")
   val waitFinishPhase = TaskKey[Unit]("wait-finish-phase","Wait finish phase")
 
+  val untilPushDockerImage = TaskKey[Unit]("push-docker-image","Push docker image to ECR")
   val allPhase = TaskKey[Unit]("all-phase","run all phase")
   val skipCheckPhase = TaskKey[Unit]("skip-check-phase","Skip check phase and force deploy")
 
