@@ -520,7 +520,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     untilPushDockerImage := Def.sequential(
       buildPhase,
       pushPhase
-    )
+    ).value
   }
 
   def runAllPhase() = {
