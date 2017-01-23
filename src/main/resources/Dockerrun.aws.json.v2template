@@ -1,7 +1,7 @@
 {
-  "AWSEBDockerrunVersion": "2",
-  "containerDefinitions" : [
-    {
+    "AWSEBDockerrunVersion": "2",
+    "containerDefinitions" : [
+      {
         "name": "${appName}",
         "image": "${dockerImageURI}",
         "memory" : 512,
@@ -21,6 +21,21 @@
             "containerPort": ${sslPort}
           }
         ]
-    }
-  ]
+      },
+      {
+        "name": "nginx-proxy",
+        "image": "nginx",
+        "essential": true,
+        "memory": 128,
+        "portMappings": [
+          {
+            "hostPort": 80,
+            "containerPort": 80
+          }
+        ],
+        "links": [
+            "${appName}"
+        ]
+      }
+    ]
 }

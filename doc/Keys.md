@@ -106,6 +106,7 @@ Type:Option[File]
 Default:None
 
 Template file to create Dockerrun.aws.json.
+See detail [detail page](CustomDockerrunAwsTemplate.md)
 
 ### dockerrunTemplateArgs(Optional)
 

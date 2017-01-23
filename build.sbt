@@ -8,7 +8,7 @@ organization := "com.geishatokyo"
 
 description := "GeishaTokyo's deploy plugin.Deploy to AWS beanstalk with Docker"
 
-version := "0.1.1-SNAPSHOT"
+version := "0.1.2-SNAPSHOT"
 
 resolvers += Resolver.sbtPluginRepo("releases")
 

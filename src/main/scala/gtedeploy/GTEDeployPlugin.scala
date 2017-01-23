@@ -44,7 +44,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     staging := "stage1",
     ecrRepository := None,
     replaceAppVersion := false,
-    ebextensionsDir := None,
+    dockerrunZipFileDir := None,
     dockerrunTemplateFile := None,
     deployTimeout := 10.minutes,
     envName <<= (staging,appName in EBS) map getEnvName,
@@ -225,7 +225,7 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
     dockerrunTemplate <<= (dockerrunTemplateFile) map getDockerrunTemplate,
     dockerrunTemplateArgs <<= (appName in EBS,staging,repositoryUri,version in GTEDeploy,DockerKeys.dockerExposedPorts in DockerKeys.Docker) map getDockerrunTemplateArgs,
     makeEbsZip <<= (dockerrunTemplate,dockerrunTemplateArgs,
-      ebextensionsDir,ebsZipFile,streams
+      dockerrunZipFileDir,ebsZipFile,streams
       ) map taskMakeEbsZip,
     uploadEbsZip <<= (awsRegion in S3,ebsZipBucketName,ebsZipFile,streams,gteDeployConf) map taskUploadEbsZip,
     createAppVersion <<= (awsRegion in EBS,ebsZipBucketName,ebsZipFile,
@@ -280,7 +280,8 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
       "dockerImageURI" -> repositoryUri,
       "dockerImageUri" -> repositoryUri,
       "port" -> ports.headOption.getOrElse(9000).toString,
-      "sslPort" -> ports.drop(1).headOption.getOrElse(9443).toString
+      "sslPort" -> ports.drop(1).headOption.getOrElse(9443).toString,
+      "version" -> version
     )
   }
 
@@ -318,25 +319,42 @@ object GTEDeployPlugin extends AutoPlugin with Doctor with AWSFunctions with Zip
   }
 
   def taskMakeEbsZip(template: String,templateArgs: Seq[(String,String)],
-                           ebextensionsDir: Option[File],
+                     dockerrunFileDir: Option[File],
                            zipPath: File,
                            s: TaskStreams) : File = {
     val dockerrun = StringTemplate.render(template,
       templateArgs:_*
     )
 
-    val extentions : List[ZipElem] = ebextensionsDir.map(dir => {
-      dir.listFiles().map(f => {
-        ZipFile(".ebextensions/" + f.getName,f)
-      }).toList
+    def listUp(rootDir: File, dirOrFile: File): List[ZipFile] = {
+      if(dirOrFile.isDirectory){
+        val files = dirOrFile.listFiles()
+        if(files == null){
+          Nil
+        }else{
+          files.toList.flatMap(f => {
+            listUp(rootDir,f)
+          })
+        }
+      }else if(dirOrFile.isFile) {
+        val path = dirOrFile.getAbsolutePath.drop(rootDir.getAbsolutePath.length + 1)
+        List(ZipFile(path, dirOrFile))
+      }else {
+        Nil
+      }
+    }
+    val files : List[ZipFile] = dockerrunFileDir.map(f => {
+      if(f.isFile){
+        List(ZipFile(f.getName,f))
+      }else {
+        listUp(f, f)
+      }
     }).getOrElse(Nil)
 
-    s.log.info(("Zip next files -->" :: "Dockerrun.aws.json" :: ebextensionsDir.map(dir => {
-      dir.listFiles().map(f => ".ebextensions/" + f.getName).toList
-    }).getOrElse(Nil)).mkString("\n"))
+    s.log.info(("Zip next files -->" :: "Dockerrun.aws.json" :: files.map(f => f.entryName).toList).mkString("\n"))
 
 
-    val zipped = zip( (ZipBinary("Dockerrun.aws.json",dockerrun.getBytes("utf-8")) :: extentions):_*)
+    val zipped = zip( (ZipBinary("Dockerrun.aws.json",dockerrun.getBytes("utf-8")) :: files):_*)
     IO.write(zipPath,zipped)
     zipPath
   }

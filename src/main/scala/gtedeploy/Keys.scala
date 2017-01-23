@@ -26,7 +26,7 @@ class Keys {
   val ecrRepository = SettingKey[Option[String]]("ecr-repository","Full repository name.Default:get by api")
 
   val dockerrunTemplateFile = SettingKey[Option[File]]("dockerrun-template-file","Template file of Dockerrun.aws.json")
-  val ebextensionsDir = SettingKey[Option[File]]("ebextensions-dir","Directory which contains files to add .ebextensions dir in ebs zip")
+  val dockerrunZipFileDir = SettingKey[Option[File]]("dockerrun-zip-file-dir","Directory which contains files to add into dockerrun zip")
 
   val replaceAppVersion = SettingKey[Boolean]("replace-app-version","Replace app version if same version exists")
 
@@ -35,7 +35,6 @@ class Keys {
   val configFile = SettingKey[File]("config-file","Path to config(Default:deploy/gdep.conf)")
 
   // dynamic settings
-
 
   val gteDeployConf = TaskKey[GTEDeployConf]("gte-deploy-conf","Load GTEDeploy config")
 
